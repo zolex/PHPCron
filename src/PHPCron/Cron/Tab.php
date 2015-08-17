@@ -29,24 +29,27 @@ class Tab
      */
     protected $output;
 
-    function __construct()
+    function __construct($loadCurrent = true)
     {
-        // parsing cron file
-        $process = new Process('crontab -l');
-        $process->run();
-        $lines = \array_filter(\explode(PHP_EOL, $process->getOutput()), function($line) {
-            return '' != \trim($line);
-        });
+		if (true === $loadCurrent) {
+	
+			// parsing cron file
+			$process = new Process('crontab -l');
+			$process->run();
+			$lines = \array_filter(\explode(PHP_EOL, $process->getOutput()), function($line) {
+				return '' != \trim($line);
+			});
 
-        foreach ($lines as $lineNumber => $line) {
-            // if line is not a comment, convert it to a cron
-            if (\strpos($line, '#suspended: ', 0) === 0 || 0 !== \strpos($line, '#', 0)) {
-                $line = Job::parse($line);
-            }
-            $this->lines['l'.$lineNumber] = $line;
-        }
+			foreach ($lines as $lineNumber => $line) {
+				// if line is not a comment, convert it to a cron
+				if (\strpos($line, '#suspended: ', 0) === 0 || 0 !== \strpos($line, '#', 0)) {
+					$line = Job::parse($line);
+				}
+				$this->lines['l'.$lineNumber] = $line;
+			}
 
-        $this->error = $process->getErrorOutput();
+			$this->error = $process->getErrorOutput();
+		}
     }
 
     /**
@@ -158,4 +161,12 @@ class Tab
     {
         return \implode(PHP_EOL, $this->lines);
     }
+	
+	/**
+	 * Clear all jobs from the tab
+	 */
+	public function clear() {
+	
+		$this->lines = array();
+	}
 }
